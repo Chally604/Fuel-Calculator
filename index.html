@@ -1,0 +1,420 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>JET A1 Fuel Calculator</title>
+    <style>
+        :root {
+            --bg: #fff6c7;
+            --panel: #fffdf5;
+            --panel-alt: #fff8dc;
+            --border: #f0d767;
+            --accent: #d49d00;
+            --accent-deep: #6d4700;
+            --text: #2b2200;
+            --muted: #5f4a1d;
+            --danger: #d32f2f;
+            --shadow: rgba(126, 95, 14, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--text);
+        }
+
+        body {
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        .app {
+            width: min(100%, 430px);
+            background: rgba(255,255,255,0.2);
+            border-radius: 26px;
+            padding: 10px;
+            box-shadow: 0 20px 40px var(--shadow);
+        }
+
+        .shell {
+            background: var(--panel);
+            border: 2px solid var(--border);
+            border-radius: 22px;
+            padding: 16px 14px 12px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            font-size: clamp(30px, 7vw, 40px);
+            color: var(--accent-deep);
+            letter-spacing: 1px;
+            font-weight: 800;
+        }
+
+        .drop {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #ffd669, #f4b900);
+            box-shadow: 0 7px 14px rgba(196, 140, 0, 0.2);
+        }
+
+        .drop svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .panel {
+            background: var(--panel-alt);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .density-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .density-row input {
+            flex: 1;
+            min-width: 0;
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 18px;
+            border: 2px solid #ecd772;
+            border-radius: 12px;
+            background: #fffdf8;
+            color: var(--text);
+            outline: none;
+        }
+
+        .density-row input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(212, 157, 0, 0.12);
+        }
+
+        .tip {
+            flex: 0 0 160px;
+            background: #fffbe7;
+            border-left: 4px solid var(--accent);
+            border-radius: 10px;
+            padding: 8px 9px;
+            font-size: 10px;
+            line-height: 1.35;
+            color: var(--muted);
+        }
+
+        .field-stack {
+            display: grid;
+            gap: 10px;
+        }
+
+        .field {
+            background: #fffefc;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 10px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .field input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #ffdf72, #f5c234);
+            color: var(--accent-deep);
+            font-size: 16px;
+            font-weight: 800;
+            padding: 12px 14px;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(196, 140, 0, 0.18);
+        }
+
+        .error {
+            display: none;
+            margin-top: 10px;
+            border-left: 4px solid var(--danger);
+            background: #ffe9e9;
+            color: var(--danger);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 11px;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .formula {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        @media (max-width: 430px) {
+            body {
+                padding: 8px;
+                overflow: hidden;
+            }
+
+            .app {
+                width: min(100%, 100vw - 12px);
+                padding: 6px;
+            }
+
+            .shell {
+                padding: 12px 10px 10px;
+            }
+
+            .density-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .tip {
+                flex-basis: auto;
+                width: 100%;
+            }
+
+            .field input, .density-row input {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="shell">
+            <div class="header">
+                <h1>JET A1</h1>
+                <div class="drop" aria-label="Fuel drop icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                        <path d="M12 2s-7 6.5-7 11a7 7 0 0 0 14 0c0-4.5-7-11-7-11z" fill="#000" opacity="0.82"/>
+                        <ellipse cx="9.8" cy="8" rx="2.8" ry="1.1" fill="#fff" opacity="0.18"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Parameters</div>
+                <label class="label" for="density">Density (kg/L)</label>
+                <div class="density-row">
+                    <input type="number" id="density" value="0.8" min="0.75" max="0.85" step="0.001" placeholder="0.80" onchange="updateCalculations()">
+                    <div class="tip">Tip: Density varies with temperature. At 0°C it is about 0.807 kg/L, at 20°C about 0.796 kg/L.</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Fuel Amount</div>
+                <div class="field-stack">
+                    <div class="field">
+                        <label for="litersInput">Liters (L)</label>
+                        <input type="number" id="litersInput" placeholder="0.00" min="0" step="0.01" oninput="convertFromLiters()">
+                    </div>
+
+                    <div class="field">
+                        <label for="kgInput">Kilograms (kg)</label>
+                        <input type="number" id="kgInput" placeholder="0.00" min="0" step="0.01" oninput="convertFromKg()">
+                    </div>
+
+                    <div class="field">
+                        <label for="lbsInput">Pounds (lbs)</label>
+                        <input type="number" id="lbsInput" placeholder="0.00" min="0" step="0.01" oninput="convertFromLbs()">
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" onclick="resetForm()">Reset</button>
+
+            <div id="errorMsg" class="error"></div>
+            <div class="formula">kg = L * Density | lbs = kg * 2.205 | L = kg / Density</div>
+        </div>
+    </div>
+
+    <script>
+        function parseNumeric(value) {
+            const numericValue = Number(value);
+            return Number.isFinite(numericValue) ? numericValue : null;
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('errorMsg');
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+
+        function clearError() {
+            document.getElementById('errorMsg').classList.remove('show');
+        }
+
+        function getDensity() {
+            const density = parseNumeric(document.getElementById('density').value);
+
+            if (density === null || density < 0.75 || density > 0.85) {
+                showError('Density must be between 0.75 and 0.85 kg/L.');
+                return null;
+            }
+
+            return density;
+        }
+
+        function convertFromLiters() {
+            const liters = parseNumeric(document.getElementById('litersInput').value);
+
+            if (liters === null || liters < 0) {
+                document.getElementById('kgInput').value = '';
+                document.getElementById('lbsInput').value = '';
+                clearError();
+                return;
+            }
+
+            const density = getDensity();
+            if (density === null) {
+                return;
+            }
+
+            const kg = liters * density;
+            const lbs = kg * 2.205;
+
+            document.getElementById('kgInput').value = kg.toFixed(2);
+            document.getElementById('lbsInput').value = lbs.toFixed(2);
+            clearError();
+        }
+
+        function convertFromKg() {
+            const kg = parseNumeric(document.getElementById('kgInput').value);
+
+            if (kg === null || kg < 0) {
+                document.getElementById('litersInput').value = '';
+                document.getElementById('lbsInput').value = '';
+                clearError();
+                return;
+            }
+
+            const density = getDensity();
+            if (density === null) {
+                return;
+            }
+
+            const liters = kg / density;
+            const lbs = kg * 2.205;
+
+            document.getElementById('litersInput').value = liters.toFixed(2);
+            document.getElementById('lbsInput').value = lbs.toFixed(2);
+            clearError();
+        }
+
+        function convertFromLbs() {
+            const lbs = parseNumeric(document.getElementById('lbsInput').value);
+
+            if (lbs === null || lbs < 0) {
+                document.getElementById('litersInput').value = '';
+                document.getElementById('kgInput').value = '';
+                clearError();
+                return;
+            }
+
+            const density = getDensity();
+            if (density === null) {
+                return;
+            }
+
+            const kg = lbs / 2.205;
+            const liters = kg / density;
+
+            document.getElementById('litersInput').value = liters.toFixed(2);
+            document.getElementById('kgInput').value = kg.toFixed(2);
+            clearError();
+        }
+
+        function updateCalculations() {
+            const liters = parseNumeric(document.getElementById('litersInput').value);
+            const kg = parseNumeric(document.getElementById('kgInput').value);
+            const lbs = parseNumeric(document.getElementById('lbsInput').value);
+
+            if (liters !== null && liters >= 0) {
+                convertFromLiters();
+            } else if (kg !== null && kg >= 0) {
+                convertFromKg();
+            } else if (lbs !== null && lbs >= 0) {
+                convertFromLbs();
+            } else {
+                clearError();
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('density').value = '0.8';
+            document.getElementById('litersInput').value = '';
+            document.getElementById('kgInput').value = '';
+            document.getElementById('lbsInput').value = '';
+            clearError();
+        }
+    </script>
+</body>
+</html>
