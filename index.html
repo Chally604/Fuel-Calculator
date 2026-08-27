@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -216,6 +216,13 @@
             color: var(--muted);
         }
 
+        .divider {
+            height: 2px;
+            background: var(--border);
+            margin: 12px 0;
+            border-radius: 1px;
+        }
+
         @media (max-width: 430px) {
             body {
                 padding: 8px;
@@ -270,21 +277,38 @@
             </div>
 
             <div class="panel">
-                <div class="panel-title">Fuel Amount</div>
+                <div class="panel-title">Fuel Amounts</div>
                 <div class="field-stack">
                     <div class="field">
-                        <label for="litersInput">Liters (L)</label>
-                        <input type="number" id="litersInput" placeholder="0.00" min="0" step="0.01" oninput="convertFromLiters()">
+                        <label for="remainingLbsInput">Remaining Fuel (lbs)</label>
+                        <input type="number" id="remainingLbsInput" placeholder="0.00" min="0" step="0.01" oninput="calculateDifference()">
                     </div>
 
                     <div class="field">
-                        <label for="kgInput">Kilograms (kg)</label>
-                        <input type="number" id="kgInput" placeholder="0.00" min="0" step="0.01" oninput="convertFromKg()">
+                        <label for="plannedLbsInput">Planned Fuel (lbs)</label>
+                        <input type="number" id="plannedLbsInput" placeholder="0.00" min="0" step="0.01" oninput="calculateDifference()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="panel">
+                <div class="panel-title">Fuel Difference</div>
+                <div class="field-stack">
+                    <div class="field">
+                        <label for="differenceLbsDisplay">Difference (lbs)</label>
+                        <input type="number" id="differenceLbsDisplay" placeholder="0.00" min="0" step="0.01" readonly>
                     </div>
 
                     <div class="field">
-                        <label for="lbsInput">Pounds (lbs)</label>
-                        <input type="number" id="lbsInput" placeholder="0.00" min="0" step="0.01" oninput="convertFromLbs()">
+                        <label for="differenceKgDisplay">Difference (kg)</label>
+                        <input type="number" id="differenceKgDisplay" placeholder="0.00" min="0" step="0.01" readonly>
+                    </div>
+
+                    <div class="field">
+                        <label for="differenceLitersDisplay">Difference (L)</label>
+                        <input type="number" id="differenceLitersDisplay" placeholder="0.00" min="0" step="0.01" readonly>
                     </div>
                 </div>
             </div>
@@ -292,7 +316,7 @@
             <button type="button" onclick="resetForm()">Reset</button>
 
             <div id="errorMsg" class="error"></div>
-            <div class="formula">kg = L * Density | lbs = kg * 2.205 | L = kg / Density</div>
+            <div class="formula">Difference = Planned - Remaining | kg = lbs / 2.205 | L = kg / Density</div>
         </div>
     </div>
 
@@ -323,96 +347,49 @@
             return density;
         }
 
-        function convertFromLiters() {
-            const liters = parseNumeric(document.getElementById('litersInput').value);
+        function calculateDifference() {
+            const remainingLbs = parseNumeric(document.getElementById('remainingLbsInput').value);
+            const plannedLbs = parseNumeric(document.getElementById('plannedLbsInput').value);
 
-            if (liters === null || liters < 0) {
-                document.getElementById('kgInput').value = '';
-                document.getElementById('lbsInput').value = '';
+            // Clear fields if either input is invalid
+            if (remainingLbs === null || plannedLbs === null || remainingLbs < 0 || plannedLbs < 0) {
+                document.getElementById('differenceLbsDisplay').value = '';
+                document.getElementById('differenceKgDisplay').value = '';
+                document.getElementById('differenceLitersDisplay').value = '';
                 clearError();
                 return;
             }
 
             const density = getDensity();
             if (density === null) {
+                document.getElementById('differenceLbsDisplay').value = '';
+                document.getElementById('differenceKgDisplay').value = '';
+                document.getElementById('differenceLitersDisplay').value = '';
                 return;
             }
 
-            const kg = liters * density;
-            const lbs = kg * 2.205;
+            // Calculate difference
+            const differenceLbs = plannedLbs - remainingLbs;
+            const differenceKg = differenceLbs / 2.205;
+            const differenceLiters = differenceKg / density;
 
-            document.getElementById('kgInput').value = kg.toFixed(2);
-            document.getElementById('lbsInput').value = lbs.toFixed(2);
-            clearError();
-        }
-
-        function convertFromKg() {
-            const kg = parseNumeric(document.getElementById('kgInput').value);
-
-            if (kg === null || kg < 0) {
-                document.getElementById('litersInput').value = '';
-                document.getElementById('lbsInput').value = '';
-                clearError();
-                return;
-            }
-
-            const density = getDensity();
-            if (density === null) {
-                return;
-            }
-
-            const liters = kg / density;
-            const lbs = kg * 2.205;
-
-            document.getElementById('litersInput').value = liters.toFixed(2);
-            document.getElementById('lbsInput').value = lbs.toFixed(2);
-            clearError();
-        }
-
-        function convertFromLbs() {
-            const lbs = parseNumeric(document.getElementById('lbsInput').value);
-
-            if (lbs === null || lbs < 0) {
-                document.getElementById('litersInput').value = '';
-                document.getElementById('kgInput').value = '';
-                clearError();
-                return;
-            }
-
-            const density = getDensity();
-            if (density === null) {
-                return;
-            }
-
-            const kg = lbs / 2.205;
-            const liters = kg / density;
-
-            document.getElementById('litersInput').value = liters.toFixed(2);
-            document.getElementById('kgInput').value = kg.toFixed(2);
+            document.getElementById('differenceLbsDisplay').value = differenceLbs.toFixed(2);
+            document.getElementById('differenceKgDisplay').value = differenceKg.toFixed(2);
+            document.getElementById('differenceLitersDisplay').value = differenceLiters.toFixed(2);
             clearError();
         }
 
         function updateCalculations() {
-            const liters = parseNumeric(document.getElementById('litersInput').value);
-            const kg = parseNumeric(document.getElementById('kgInput').value);
-            const lbs = parseNumeric(document.getElementById('lbsInput').value);
-
-            if (liters !== null && liters >= 0) {
-                convertFromLiters();
-            } else if (kg !== null && kg >= 0) {
-                convertFromKg();
-            } else if (lbs !== null && lbs >= 0) {
-                convertFromLbs();
-            } else {
-                clearError();
-            }
+            calculateDifference();
         }
 
         function resetForm() {
             document.getElementById('density').value = '0.8';
-            document.getElementById('litersInput').value = '';
-            document.getElementById('kgInput').value = '';
-            document.getElementById('lbsInput').value = '';
+            document.getElementById('remainingLbsInput').value = '';
+            document.getElementById('plannedLbsInput').value = '';
+            document.getElementById('differenceLbsDisplay').value = '';
+            document.getElementById('differenceKgDisplay').value = '';
+            document.getElementById('differenceLitersDisplay').value = '';
             clearError();
         }
     </script>
