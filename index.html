@@ -351,16 +351,7 @@
             const remainingLbs = parseNumeric(document.getElementById('remainingLbsInput').value);
             const plannedLbs = parseNumeric(document.getElementById('plannedLbsInput').value);
 
-            // If both inputs are empty, clear all refueling fields
-            if (remainingLbs === null && plannedLbs === null) {
-                document.getElementById('differenceLbsDisplay').value = '';
-                document.getElementById('differenceKgDisplay').value = '';
-                document.getElementById('differenceLitersDisplay').value = '';
-                clearError();
-                return;
-            }
-
-            // Clear fields if either input is invalid or negative
+            // Only calculate if BOTH inputs are filled and valid
             if (remainingLbs === null || plannedLbs === null || remainingLbs < 0 || plannedLbs < 0) {
                 document.getElementById('differenceLbsDisplay').value = '';
                 document.getElementById('differenceKgDisplay').value = '';
