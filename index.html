@@ -348,10 +348,22 @@
         }
 
         function calculateDifference() {
-            const remainingLbs = parseNumeric(document.getElementById('remainingLbsInput').value);
-            const plannedLbs = parseNumeric(document.getElementById('plannedLbsInput').value);
+            const remainingInput = document.getElementById('remainingLbsInput').value.trim();
+            const plannedInput = document.getElementById('plannedLbsInput').value.trim();
+            
+            // Only proceed if BOTH fields have values
+            if (remainingInput === '' || plannedInput === '') {
+                document.getElementById('differenceLbsDisplay').value = '';
+                document.getElementById('differenceKgDisplay').value = '';
+                document.getElementById('differenceLitersDisplay').value = '';
+                clearError();
+                return;
+            }
 
-            // Only calculate if BOTH inputs are filled and valid
+            const remainingLbs = parseNumeric(remainingInput);
+            const plannedLbs = parseNumeric(plannedInput);
+
+            // Check if values are valid numbers and non-negative
             if (remainingLbs === null || plannedLbs === null || remainingLbs < 0 || plannedLbs < 0) {
                 document.getElementById('differenceLbsDisplay').value = '';
                 document.getElementById('differenceKgDisplay').value = '';
