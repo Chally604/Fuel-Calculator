@@ -292,7 +292,7 @@
                         <input type="number" id="density" readonly min="0.75" max="0.85" step="0.001" placeholder="0.80">
                     </div>
                 </div>
-                <div class="tip">Tip: Density varies with temperature. At 0°C it is about 0.807 kg/L, at 20°C about 0.796 kg/L.</div>
+                <div class="tip">At 0°C: 0.807 kg/L | At 15°C: 0.804 kg/L | At 20°C: 0.796 kg/L</div>
             </div>
 
             <div class="panel">
@@ -356,8 +356,12 @@
         }
 
         function calculateDensityFromTemp(tempCelsius) {
-            // Linear approximation: Density = 0.8427 - (0.00033 × Temperature in °C)
-            const density = 0.8427 - (0.00033 * tempCelsius);
+            // Linear approximation based on industry standard values:
+            // At 0°C: 0.807 kg/L
+            // At 15°C: 0.804 kg/L
+            // At 20°C: 0.796 kg/L
+            // Formula: Density = 0.804 - (0.0002 × (Temperature - 15))
+            const density = 0.804 - (0.0002 * (tempCelsius - 15));
             return density;
         }
 
@@ -378,7 +382,7 @@
             }
 
             const calculatedDensity = calculateDensityFromTemp(temp);
-            densityDisplay.value = calculatedDensity.toFixed(3);
+            densityDisplay.value = calculatedDensity.toFixed(4);
             calculateDifference();
         }
 
