@@ -335,7 +335,7 @@
             <button type="button" onclick="resetForm()">Reset</button>
 
             <div id="errorMsg" class="error"></div>
-            <div class="formula">Refueling = Planned - Remaining | kg = lbs / 2.205 | L = kg / Density</div>
+            <div class="formula">Refueling = Planned - Remaining | kg = lbs / 2.205 | L = kg / Density | 1 L = 1.764 lbs</div>
         </div>
     </div>
 
@@ -360,8 +360,8 @@
             // At 0°C: 0.807 kg/L
             // At 15°C: 0.804 kg/L
             // At 20°C: 0.796 kg/L
-            // Formula: Density = 0.804 - (0.0002 × (Temperature - 15))
-            const density = 0.804 - (0.0002 * (tempCelsius - 15));
+            // Formula: Density = 0.8066 - (0.000176 × Temperature)
+            const density = 0.8066 - (0.000176 * tempCelsius);
             return density;
         }
 
