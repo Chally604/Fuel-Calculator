@@ -182,6 +182,40 @@
             outline: none;
         }
 
+        .field input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 6px;
+            align-items: flex-end;
+        }
+
+        .input-group .field {
+            flex: 1;
+        }
+
+        .toggle-btn {
+            background: #fffbe7;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 6px 8px;
+            cursor: pointer;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            white-space: nowrap;
+            height: fit-content;
+        }
+
+        .toggle-btn:hover {
+            background: #fff8d4;
+        }
+
         button {
             width: 100%;
             border: none;
@@ -245,6 +279,15 @@
                 align-items: stretch;
             }
 
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .toggle-btn {
+                width: 100%;
+            }
+
             .tip {
                 flex-basis: auto;
                 width: 100%;
@@ -271,11 +314,21 @@
 
             <div class="panel">
                 <div class="panel-title">Parameters</div>
-                <label class="label" for="density">Density (kg/L)</label>
-                <div class="density-row">
-                    <input type="number" id="density" value="0.8" min="0.75" max="0.85" step="0.001" placeholder="0.80" onchange="updateCalculations()">
-                    <div class="tip">Tip: Density varies with temperature. At 0°C it is about 0.807 kg/L, at 20°C about 0.796 kg/L.</div>
+                <div class="input-group">
+                    <div class="field">
+                        <label for="temperature">Temperature (°C)</label>
+                        <input type="number" id="temperature" placeholder="-" min="-50" max="50" step="0.1" oninput="updateDensityFromTemp()">
+                    </div>
+                    <button type="button" class="toggle-btn" onclick="toggleMode()">Switch to Density</button>
                 </div>
+                <div class="input-group" id="densityInputGroup" style="display: none;">
+                    <div class="field">
+                        <label for="density">Density (kg/L)</label>
+                        <input type="number" id="density" value="0.8" min="0.75" max="0.85" step="0.001" placeholder="0.80" oninput="updateCalculations()">
+                    </div>
+                    <button type="button" class="toggle-btn" onclick="toggleMode()">Switch to Temp</button>
+                </div>
+                <div class="tip">Tip: Density varies with temperature. At 0°C it is about 0.807 kg/L, at 20°C about 0.796 kg/L.</div>
             </div>
 
             <div class="panel">
@@ -318,11 +371,13 @@
             <button type="button" onclick="resetForm()">Reset</button>
 
             <div id="errorMsg" class="error"></div>
-            <div class="formula">Refueling = Planned - Remaining | kg = lbs / 2.205 | L = kg / Density</div>
+            <div class="formula">Refueling = Planned - Remaining | kg = lbs / 2.205 | L = kg / Density | Density = 0.8427 - (0.00033 × Temp°C)</div>
         </div>
     </div>
 
     <script>
+        let useTemperatureMode = true;
+
         function parseNumeric(value) {
             const numericValue = Number(value);
             return Number.isFinite(numericValue) ? numericValue : null;
@@ -338,8 +393,87 @@
             document.getElementById('errorMsg').classList.remove('show');
         }
 
+        function toggleMode() {
+            useTemperatureMode = !useTemperatureMode;
+            const temperatureGroup = document.querySelector('.input-group');
+            const densityGroup = document.getElementById('densityInputGroup');
+
+            if (useTemperatureMode) {
+                temperatureGroup.style.display = 'flex';
+                densityGroup.style.display = 'none';
+                document.getElementById('temperature').focus();
+            } else {
+                temperatureGroup.style.display = 'none';
+                densityGroup.style.display = 'flex';
+                document.getElementById('density').focus();
+            }
+        }
+
+        function calculateDensityFromTemp(tempCelsius) {
+            // Linear approximation: Density = 0.8427 - (0.00033 × Temperature in °C)
+            const density = 0.8427 - (0.00033 * tempCelsius);
+            return density;
+        }
+
+        function calculateTempFromDensity(density) {
+            // Reverse calculation: Temperature = (0.8427 - Density) / 0.00033
+            const temp = (0.8427 - density) / 0.00033;
+            return temp;
+        }
+
+        function updateDensityFromTemp() {
+            const tempInput = document.getElementById('temperature').value.trim();
+            const densityDisplay = document.getElementById('density');
+
+            if (tempInput === '') {
+                densityDisplay.value = '';
+                clearError();
+                return;
+            }
+
+            const temp = parseNumeric(tempInput);
+            if (temp === null || temp < -50 || temp > 50) {
+                clearError();
+                return;
+            }
+
+            const calculatedDensity = calculateDensityFromTemp(temp);
+            densityDisplay.value = calculatedDensity.toFixed(3);
+            calculateDifference();
+        }
+
+        function updateTempFromDensity() {
+            const densityInput = document.getElementById('density').value.trim();
+            const tempDisplay = document.getElementById('temperature');
+
+            if (densityInput === '') {
+                tempDisplay.value = '';
+                clearError();
+                return;
+            }
+
+            const density = parseNumeric(densityInput);
+            if (density === null || density < 0.75 || density > 0.85) {
+                return;
+            }
+
+            const calculatedTemp = calculateTempFromDensity(density);
+            tempDisplay.value = calculatedTemp.toFixed(1);
+        }
+
         function getDensity() {
-            const density = parseNumeric(document.getElementById('density').value);
+            const densityInput = document.getElementById('density').value.trim();
+            
+            if (densityInput === '') {
+                if (useTemperatureMode) {
+                    showError('Please enter a temperature.');
+                } else {
+                    showError('Please enter a density.');
+                }
+                return null;
+            }
+
+            const density = parseNumeric(densityInput);
 
             if (density === null || density < 0.75 || density > 0.85) {
                 showError('Density must be between 0.75 and 0.85 kg/L.');
@@ -394,10 +528,14 @@
         }
 
         function updateCalculations() {
+            if (!useTemperatureMode) {
+                updateTempFromDensity();
+            }
             calculateDifference();
         }
 
         function resetForm() {
+            document.getElementById('temperature').value = '';
             document.getElementById('density').value = '0.8';
             document.getElementById('remainingLbsInput').value = '';
             document.getElementById('plannedLbsInput').value = '';
@@ -405,6 +543,9 @@
             document.getElementById('differenceKgDisplay').value = '';
             document.getElementById('differenceLitersDisplay').value = '';
             clearError();
+            useTemperatureMode = true;
+            document.querySelector('.input-group').style.display = 'flex';
+            document.getElementById('densityInputGroup').style.display = 'none';
         }
     </script>
 </body>
